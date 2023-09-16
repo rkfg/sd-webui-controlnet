@@ -381,6 +381,7 @@ class UnetHook(nn.Module):
         self.gn_auto_machine_weight = 1.0
         self.current_style_fidelity = 0.0
         self.current_uc_indices = None
+        self.enable_animate_diff = False
 
     @staticmethod
     def call_vae_using_process(p, x, batch_size=None, mask=None):
@@ -558,7 +559,7 @@ class UnetHook(nn.Module):
                 context = torch.cat([context, control.clone()], dim=1)
 
             # handle ControlNet / T2I_Adapter
-            for param in outer.control_params:
+            for param_idx, param in enumerate(outer.control_params):
                 if no_high_res_control:
                     continue
 
@@ -629,7 +630,28 @@ class UnetHook(nn.Module):
                 if param.global_average_pooling:
                     control = [torch.mean(c, dim=(2, 3), keepdim=True) for c in control]
 
+                frfactors = [0.5, 0.3, 0.2, 0.1]
+                factor_count = len(frfactors)
                 for idx, item in enumerate(control):
+                    frame_count = round(len(item) / 2)
+                    if outer.enable_animate_diff and frame_count > factor_count+3:
+                        for ifr, frfactor in enumerate(frfactors):
+                            if param_idx == 0:
+                                item[ifr+1] *= frfactor
+                                item[frame_count+ifr+1] *= frfactor
+
+                            if param_idx == 1:
+                                item[frame_count*2-ifr-2] *= frfactor
+                                item[frame_count-ifr-2] *= frfactor
+
+                        if param_idx == 0:
+                            item[factor_count+1:frame_count] = 0
+                            item[frame_count+factor_count+1:] = 0
+
+                        if param_idx == 1:
+                            item[:frame_count-factor_count-1] = 0
+                            item[frame_count:frame_count*2-factor_count-1] = 0
+
                     target = None
                     if param.control_model_type == ControlModelType.ControlNet:
                         target = total_controlnet_embedding
@@ -942,6 +964,10 @@ class UnetHook(nn.Module):
                 need_attention_hijack = True
 
         all_modules = torch_dfs(model)
+
+        for i, module in enumerate(all_modules):
+            if "VanillaTemporalModule" in module.__class__.__name__:
+                self.enable_animate_diff = True
 
         if need_attention_hijack:
             attn_modules = [module for module in all_modules if isinstance(module, BasicTransformerBlock) or isinstance(module, BasicTransformerBlockSGM)]
