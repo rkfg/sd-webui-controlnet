@@ -855,6 +855,7 @@ class Script(scripts.Script, metaclass=(
                 hr_hint_cond=hr_control,
                 soft_injection=control_mode != external_code.ControlMode.BALANCED,
                 cfg_injection=control_mode == external_code.ControlMode.CONTROL,
+                frame_factors=unit.frame_factors
             )
             forward_params.append(forward_param)
 

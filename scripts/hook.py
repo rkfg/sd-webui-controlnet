@@ -200,6 +200,7 @@ class ControlParams:
             global_average_pooling,
             soft_injection,
             cfg_injection,
+            frame_factors: str,
             **kwargs  # To avoid errors
     ):
         self.control_model = control_model
@@ -219,6 +220,10 @@ class ControlParams:
         self.soft_injection = soft_injection
         self.cfg_injection = cfg_injection
         self.vision_hint_count = None
+        try:
+            self.frame_factors = list(map(lambda ff: float(ff), map(lambda ff: ff.strip(), frame_factors.split(","))))
+        except:
+            self.frame_factors = []
 
     @property
     def hint_cond(self):
@@ -630,7 +635,7 @@ class UnetHook(nn.Module):
                 if param.global_average_pooling:
                     control = [torch.mean(c, dim=(2, 3), keepdim=True) for c in control]
 
-                frfactors = [0.5, 0.3, 0.2, 0.1]
+                frfactors = param.frame_factors
                 factor_count = len(frfactors)
                 for idx, item in enumerate(control):
                     frame_count = round(len(item) / 2)

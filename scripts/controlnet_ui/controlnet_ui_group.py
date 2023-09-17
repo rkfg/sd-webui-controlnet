@@ -37,6 +37,7 @@ class UiControlNetUnit(external_code.ControlNetUnit):
         batch_images: Optional[Union[str, List[external_code.InputImage]]] = None,
         output_dir: str = "",
         loopback: bool = False,
+        frame_factors: str = "",
         use_preview_as_input: bool = False,
         generated_image: Optional[np.ndarray] = None,
         enabled: bool = True,
@@ -59,6 +60,7 @@ class UiControlNetUnit(external_code.ControlNetUnit):
         self.batch_images = batch_images
         self.output_dir = output_dir
         self.loopback = loopback
+        self.frame_factors = frame_factors
 
 
 class ControlNetUiGroup(object):
@@ -137,6 +139,7 @@ class ControlNetUiGroup(object):
         self.control_mode = None
         self.resize_mode = None
         self.loopback = None
+        self.frame_factors = None
         self.use_preview_as_input = None
         self.openpose_editor = None
         self.preset_panel = None
@@ -417,6 +420,11 @@ class ControlNetUiGroup(object):
             elem_id=f"{elem_id_tabname}_{tabname}_controlnet_automatically_send_generated_images_checkbox",
             elem_classes="controlnet_loopback_checkbox",
             visible=not is_img2img,
+        )
+
+        self.frame_factors = gr.Textbox(
+            label="Animation frame weights",
+            value="1.0, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1",
         )
 
         self.preset_panel = ControlNetPresetUI(
@@ -848,6 +856,7 @@ class ControlNetUiGroup(object):
             batch_image_dir_state,
             output_dir_state,
             self.loopback,
+            self.frame_factors,
             # Non-persistent fields.
             # Following inputs will not be persistent on `ControlNetUnit`.
             # They are only used during object construction.
