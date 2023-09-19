@@ -642,20 +642,20 @@ class UnetHook(nn.Module):
                     if outer.enable_animate_diff and frame_count > factor_count+3:
                         for ifr, frfactor in enumerate(frfactors):
                             if param_idx == 0:
-                                item[ifr+1] *= frfactor
-                                item[frame_count+ifr+1] *= frfactor
+                                item[ifr] *= frfactor
+                                item[frame_count+ifr] *= frfactor
 
                             if param_idx == 1:
-                                item[frame_count*2-ifr-2] *= frfactor
-                                item[frame_count-ifr-2] *= frfactor
+                                item[frame_count*2-ifr-1] *= frfactor
+                                item[frame_count-ifr-1] *= frfactor
 
                         if param_idx == 0:
-                            item[factor_count+1:frame_count] = 0
-                            item[frame_count+factor_count+1:] = 0
+                            item[factor_count:frame_count] = 0
+                            item[frame_count+factor_count:] = 0
 
                         if param_idx == 1:
-                            item[:frame_count-factor_count-1] = 0
-                            item[frame_count:frame_count*2-factor_count-1] = 0
+                            item[:frame_count-factor_count] = 0
+                            item[frame_count:frame_count*2-factor_count] = 0
 
                     target = None
                     if param.control_model_type == ControlModelType.ControlNet:
